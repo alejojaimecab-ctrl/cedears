@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CEDEAR Radar — Argentina</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #1a1a24;
+    --border: #2a2a3a;
+    --accent: #00e5a0;
+    --accent2: #7c3aed;
+    --accent3: #f59e0b;
+    --danger: #ef4444;
+    --text: #e8e8f0;
+    --muted: #6b6b85;
+    --font-mono: 'Space Mono', monospace;
+    --font-display: 'Syne', sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-mono);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,160,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,160,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px 20px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .logo {
+    display: flex;
+    flex-direction: column;
+  }
+  .logo-tag {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  h1 {
+    font-family: var(--font-display);
+    font-size: clamp(28px, 5vw, 42px);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -1px;
+  }
+  h1 span { color: var(--accent); }
+  .subtitle {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 6px;
+    letter-spacing: 1px;
+  }
+  .live-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0,229,160,0.08);
+    border: 1px solid rgba(0,229,160,0.2);
+    padding: 8px 16px;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--accent);
+    height: fit-content;
+  }
+  .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+
+  /* Macro strip */
+  .macro-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+  .macro-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .macro-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent);
+  }
+  .macro-label {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .macro-value {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    transition: all 0.3s;
+  }
+  .macro-value.loading-val { color: var(--muted); font-size: 14px; }
+  .macro-sub {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* Search bar */
+  .search-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+  .search-label {
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .search-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .ticker-input {
+    flex: 1;
+    min-width: 200px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 14px;
+    padding: 12px 16px;
+    outline: none;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    transition: border-color 0.2s;
+  }
+  .ticker-input:focus { border-color: var(--accent); }
+  .ticker-input::placeholder { color: var(--muted); letter-spacing: 1px; text-transform: none; }
+  .btn {
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    padding: 12px 24px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.2s;
+  }
+  .btn:hover { background: #00ffb3; transform: translateY(-1px); }
+  .btn:active { transform: translateY(0); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+  }
+  .btn-outline:hover { background: rgba(0,229,160,0.1); }
+
+  /* Sector filters */
+  .sector-filters {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+  .sector-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    padding: 6px 14px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.2s;
+  }
+  .sector-btn:hover, .sector-btn.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(0,229,160,0.06);
+  }
+
+  /* Results panel */
+  #results {
+    min-height: 300px;
+  }
+
+  .skeleton {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 24px;
+    animation: shimmer 1.5s infinite;
+  }
+  @keyframes shimmer {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+  }
+
+  /* Analysis output */
+  .analysis-wrap {
+    display: grid;
+    gap: 16px;
+    animation: fadeUp 0.4s ease;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .section-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 20px;
+    position: relative;
+  }
+  .section-card .card-title {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* CEDEAR cards in ranking */
+  .cedear-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+  }
+  .cedear-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .cedear-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+  .cedear-card.positive::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 2px;
+    background: var(--accent);
+  }
+  .cedear-card.negative::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 2px;
+    background: var(--danger);
+  }
+  .cedear-ticker {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 2px;
+  }
+  .cedear-name {
+    font-size: 9px;
+    color: var(--muted);
+    margin-bottom: 10px;
+    letter-spacing: 0.5px;
+  }
+  .cedear-price {
+    font-size: 13px;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .cedear-change {
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .positive .cedear-change { color: var(--accent); }
+  .negative .cedear-change { color: var(--danger); }
+  .cedear-sector {
+    font-size: 9px;
+    color: var(--muted);
+    margin-top: 8px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .cedear-ratio {
+    font-size: 9px;
+    margin-top: 4px;
+    padding: 2px 6px;
+    display: inline-block;
+  }
+  .ratio-cheap { background: rgba(0,229,160,0.1); color: var(--accent); }
+  .ratio-fair { background: rgba(245,158,11,0.1); color: var(--accent3); }
+  .ratio-expensive { background: rgba(239,68,68,0.1); color: var(--danger); }
+
+  /* Prose analysis */
+  .prose {
+    font-size: 13px;
+    line-height: 1.8;
+    color: #b8b8cc;
+    white-space: pre-wrap;
+  }
+  .prose strong { color: var(--text); }
+
+  /* Sector tags */
+  .sector-tag {
+    display: inline-block;
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    margin: 2px;
+    border: 1px solid;
+  }
+  .sector-tech { border-color: rgba(124,58,237,0.5); color: #a78bfa; background: rgba(124,58,237,0.08); }
+  .sector-energy { border-color: rgba(245,158,11,0.5); color: var(--accent3); background: rgba(245,158,11,0.08); }
+  .sector-finance { border-color: rgba(0,229,160,0.5); color: var(--accent); background: rgba(0,229,160,0.08); }
+  .sector-consumer { border-color: rgba(239,68,68,0.5); color: #fca5a5; background: rgba(239,68,68,0.08); }
+
+  /* Opportunities */
+  .opp-list { display: grid; gap: 10px; }
+  .opp-item {
+    background: rgba(0,229,160,0.04);
+    border: 1px solid rgba(0,229,160,0.15);
+    padding: 14px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 14px;
+    align-items: start;
+  }
+  .opp-rank {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 800;
+    color: rgba(0,229,160,0.2);
+    line-height: 1;
+  }
+  .opp-ticker {
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--accent);
+  }
+  .opp-reason { font-size: 12px; color: var(--muted); line-height: 1.6; margin-top: 4px; }
+
+  /* Disclaimer */
+  .disclaimer {
+    font-size: 10px;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    padding-top: 16px;
+    margin-top: 8px;
+    line-height: 1.6;
+    letter-spacing: 0.3px;
+  }
+
+  /* Error */
+  .error-box {
+    background: rgba(239,68,68,0.08);
+    border: 1px solid rgba(239,68,68,0.3);
+    padding: 20px;
+    color: #fca5a5;
+    font-size: 13px;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); }
+
+  @media (max-width: 600px) {
+    .cedear-grid { grid-template-columns: 1fr 1fr; }
+    .search-row { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="logo">
+      <div class="logo-tag">// Análisis financiero AR</div>
+      <h1>CEDEAR<span>RADAR</span></h1>
+      <div class="subtitle">Análisis de mercado · Buenos Aires · Powered by Claude AI</div>
+    </div>
+    <div class="live-badge">
+      <span class="dot"></span>
+      DATOS EN TIEMPO REAL
+    </div>
+  </header>
+
+  <!-- Macro strip -->
+  <div class="macro-strip" id="macroStrip">
+    <div class="macro-card">
+      <div class="macro-label">Dólar CCL</div>
+      <div class="macro-value loading-val" id="mCCL">cargando...</div>
+      <div class="macro-sub" id="mCCLsub">—</div>
+    </div>
+    <div class="macro-card">
+      <div class="macro-label">Dólar MEP</div>
+      <div class="macro-value loading-val" id="mMEP">cargando...</div>
+      <div class="macro-sub" id="mMEPsub">—</div>
+    </div>
+    <div class="macro-card">
+      <div class="macro-label">Dólar Oficial</div>
+      <div class="macro-value loading-val" id="mOficial">cargando...</div>
+      <div class="macro-sub" id="mOficialsub">—</div>
+    </div>
+    <div class="macro-card">
+      <div class="macro-label">Última actualización</div>
+      <div class="macro-value" id="mTime" style="font-size:14px">—</div>
+      <div class="macro-sub" id="mDate">—</div>
+    </div>
+  </div>
+
+  <!-- Search -->
+  <div class="search-section">
+    <div class="search-label">// Consulta de análisis</div>
+    <div class="search-row">
+      <input
+        class="ticker-input"
+        id="queryInput"
+        type="text"
+        placeholder="ej: mejores CEDEARs hoy · análisis tech · AAPL · sector energía"
+        style="text-transform: none; letter-spacing: 0.5px;"
+      />
+      <button class="btn" id="analyzeBtn" onclick="runAnalysis()">ANALIZAR →</button>
+      <button class="btn btn-outline" onclick="quickAnalysis()">TOP 10 HOY</button>
+    </div>
+  </div>
+
+  <!-- Sector filters -->
+  <div class="sector-filters">
+    <button class="sector-btn active" onclick="setSector(this, '')">TODOS</button>
+    <button class="sector-btn" onclick="setSector(this, 'tecnología')">TECH</button>
+    <button class="sector-btn" onclick="setSector(this, 'energía')">ENERGÍA</button>
+    <button class="sector-btn" onclick="setSector(this, 'bancos financiero')">BANCOS</button>
+    <button class="sector-btn" onclick="setSector(this, 'consumo retail')">CONSUMO</button>
+    <button class="sector-btn" onclick="setSector(this, 'salud')">SALUD</button>
+    <button class="sector-btn" onclick="setSector(this, 'ETF SPY QQQ')">ETFs</button>
+  </div>
+
+  <!-- Results -->
+  <div id="results">
+    <div class="section-card" style="text-align:center; padding: 60px 20px;">
+      <div style="font-family: var(--font-display); font-size: 48px; font-weight: 800; color: var(--border); margin-bottom: 16px;">⬡</div>
+      <div style="color: var(--muted); font-size: 12px; letter-spacing: 2px;">INGRESÁ UNA CONSULTA O HACÉ CLIC EN "TOP 10 HOY"</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const API_URL = "https://api.anthropic.com/v1/messages";
+let activeSector = '';
+
+function setSector(el, sector) {
+  document.querySelectorAll('.sector-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  activeSector = sector;
+}
+
+function quickAnalysis() {
+  document.getElementById('queryInput').value = '';
+  runAnalysis(true);
+}
+
+async function runAnalysis(isQuick = false) {
+  const query = isQuick ? '' : document.getElementById('queryInput').value.trim();
+  const btn = document.getElementById('analyzeBtn');
+  btn.disabled = true;
+  btn.textContent = 'ANALIZANDO...';
+
+  showSkeleton();
+
+  const sectorCtx = activeSector ? ` Enfocate especialmente en el sector: ${activeSector}.` : '';
+  const today = new Date().toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+  const userPrompt = isQuick
+    ? `Hoy es ${today}. Analizá el mercado argentino de CEDEARs y dime el TOP 10 CEDEARs con mejor rendimiento reciente y proyección. Incluí: tipo de cambio CCL y MEP aproximado actual, tabla de los top CEDEARs con ticker/empresa/sector/variación estimada/precio ARS aproximado/ratio CCL, análisis por sectores (tech, energía, bancos, consumo), 3 mejores oportunidades actuales con justificación, y riesgos a considerar. Usá búsqueda web para datos actualizados.${sectorCtx}`
+    : `Hoy es ${today}. El usuario consulta: "${query || 'análisis general del mercado de CEDEARs hoy'}".${sectorCtx} Respondé con un análisis completo del mercado de CEDEARs argentino incluyendo datos actualizados de precios, tipo de cambio CCL/MEP, rendimientos recientes, y recomendaciones. Usá búsqueda web para datos actualizados.`;
+
+  const systemPrompt = `Sos un experto analista financiero especializado en CEDEARs del mercado argentino. 
+Respondé SIEMPRE en este formato JSON exacto, sin markdown ni texto adicional:
+{
+  "macro": {
+    "ccl": "valor numérico o rango ej: 1285",
+    "mep": "valor numérico",
+    "oficial": "valor numérico",
+    "tendencia": "alcista|bajista|lateral",
+    "contexto": "1-2 oraciones sobre el contexto macro actual"
+  },
+  "cedears": [
+    {
+      "ticker": "AAPL",
+      "empresa": "Apple Inc.",
+      "sector": "Tecnología",
+      "variacion": "+2.3%",
+      "precio_ars": "17500",
+      "ratio_ccl": "0.98",
+      "señal": "compra|mantener|esperar"
+    }
+  ],
+  "sectores": [
+    {
+      "nombre": "Tecnología",
+      "emoji": "💻",
+      "tendencia": "alcista|bajista|lateral",
+      "analisis": "2-3 oraciones de análisis",
+      "destacados": ["AAPL", "MSFT"]
+    }
+  ],
+  "oportunidades": [
+    {
+      "ticker": "MSFT",
+      "empresa": "Microsoft",
+      "razon": "explicación breve de por qué es una oportunidad ahora"
+    }
+  ],
+  "riesgos": ["riesgo 1", "riesgo 2", "riesgo 3"],
+  "fecha_datos": "fecha y hora aproximada de los datos"
+}
+Incluí mínimo 8 CEDEARs y 3-4 sectores. Si no tenés datos exactos, usá estimaciones razonables basadas en tendencias recientes e indicalo.`;
+
+  try {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 3000,
+        system: systemPrompt,
+        tools: [{ type: "web_search_20250305", name: "web_search" }],
+        messages: [{ role: 'user', content: userPrompt }]
+      })
+    });
+
+    const data = await response.json();
+
+    // Extract text from content blocks
+    let rawText = '';
+    if (data.content) {
+      rawText = data.content
+        .filter(b => b.type === 'text')
+        .map(b => b.text)
+        .join('');
+    }
+
+    // Parse JSON
+    let analysis;
+    try {
+      const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+      analysis = jsonMatch ? JSON.parse(jsonMatch[0]) : null;
+    } catch(e) {
+      analysis = null;
+    }
+
+    if (analysis) {
+      updateMacro(analysis.macro);
+      renderAnalysis(analysis);
+    } else {
+      renderFallback(rawText);
+    }
+
+  } catch(err) {
+    renderError(err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'ANALIZAR →';
+  }
+}
+
+function updateMacro(macro) {
+  if (!macro) return;
+  const fmt = v => v ? `$${parseInt(v).toLocaleString('es-AR')}` : '—';
+  document.getElementById('mCCL').textContent = fmt(macro.ccl);
+  document.getElementById('mCCL').className = 'macro-value';
+  document.getElementById('mMEP').textContent = fmt(macro.mep);
+  document.getElementById('mMEP').className = 'macro-value';
+  document.getElementById('mOficial').textContent = fmt(macro.oficial);
+  document.getElementById('mOficial').className = 'macro-value';
+
+  const trend = { alcista: '▲ ALCISTA', bajista: '▼ BAJISTA', lateral: '— LATERAL' };
+  const trendColor = { alcista: 'var(--accent)', bajista: 'var(--danger)', lateral: 'var(--accent3)' };
+  document.getElementById('mCCLsub').textContent = trend[macro.tendencia] || '—';
+  document.getElementById('mCCLsub').style.color = trendColor[macro.tendencia] || 'var(--muted)';
+
+  const now = new Date();
+  document.getElementById('mTime').textContent = now.toLocaleTimeString('es-AR', {hour:'2-digit',minute:'2-digit'});
+  document.getElementById('mDate').textContent = now.toLocaleDateString('es-AR', {day:'2-digit',month:'short',year:'numeric'});
+}
+
+function renderAnalysis(a) {
+  const results = document.getElementById('results');
+  results.innerHTML = `<div class="analysis-wrap" id="analysisWrap"></div>`;
+  const wrap = document.getElementById('analysisWrap');
+
+  // CEDEAR Grid
+  if (a.cedears && a.cedears.length) {
+    const card = makeCard('🏆 TOP CEDEARs — Rendimiento Reciente', renderCEDEARs(a.cedears));
+    wrap.appendChild(card);
+  }
+
+  // Sectors
+  if (a.sectores && a.sectores.length) {
+    const card = makeCard('🏭 Análisis por Sectores', renderSectors(a.sectores));
+    wrap.appendChild(card);
+  }
+
+  // Opportunities
+  if (a.oportunidades && a.oportunidades.length) {
+    const card = makeCard('⭐ Radar de Oportunidades', renderOpps(a.oportunidades));
+    wrap.appendChild(card);
+  }
+
+  // Risks
+  if (a.riesgos && a.riesgos.length) {
+    const card = makeCard('⚠️ Riesgos a Considerar', renderRisks(a.riesgos));
+    wrap.appendChild(card);
+  }
+
+  // Disclaimer
+  const disc = document.createElement('div');
+  disc.className = 'disclaimer';
+  disc.textContent = '⚠ AVISO LEGAL: Este análisis es únicamente informativo y no constituye asesoramiento financiero profesional. Los datos pueden ser estimaciones. Toda inversión conlleva riesgo de pérdida. Consultá con un asesor financiero matriculado (CNV) antes de tomar decisiones de inversión.';
+  wrap.appendChild(disc);
+}
+
+function makeCard(title, content) {
+  const card = document.createElement('div');
+  card.className = 'section-card';
+  card.innerHTML = `<div class="card-title">${title}</div>`;
+  if (typeof content === 'string') {
+    card.innerHTML += content;
+  } else {
+    card.appendChild(content);
+  }
+  return card;
+}
+
+function renderCEDEARs(cedears) {
+  const grid = document.createElement('div');
+  grid.className = 'cedear-grid';
+  cedears.forEach(c => {
+    const isPos = !c.variacion || !c.variacion.startsWith('-');
+    const ratio = parseFloat(c.ratio_ccl) || 1;
+    const ratioClass = ratio < 0.95 ? 'ratio-cheap' : ratio > 1.05 ? 'ratio-expensive' : 'ratio-fair';
+    const ratioLabel = ratio < 0.95 ? 'DESCUENTO' : ratio > 1.05 ? 'PRIMA' : 'JUSTO';
+
+    const el = document.createElement('div');
+    el.className = `cedear-card ${isPos ? 'positive' : 'negative'}`;
+    el.innerHTML = `
+      <div class="cedear-ticker">${c.ticker}</div>
+      <div class="cedear-name">${c.empresa || ''}</div>
+      <div class="cedear-price">${c.precio_ars ? '$' + parseInt(c.precio_ars).toLocaleString('es-AR') : 'N/D'} ARS</div>
+      <div class="cedear-change">${c.variacion || 'N/D'}</div>
+      <div class="cedear-sector">${c.sector || ''}</div>
+      ${c.ratio_ccl ? `<div class="cedear-ratio ${ratioClass}">CCL: ${ratioLabel} (${parseFloat(c.ratio_ccl).toFixed(2)}x)</div>` : ''}
+    `;
+    grid.appendChild(el);
+  });
+  return grid;
+}
+
+function renderSectors(sectors) {
+  const sectorClass = {
+    'tecnología': 'sector-tech', 'tech': 'sector-tech',
+    'energía': 'sector-energy', 'energia': 'sector-energy',
+    'bancos': 'sector-finance', 'financiero': 'sector-finance', 'bancos/financiero': 'sector-finance',
+    'consumo': 'sector-consumer', 'retail': 'sector-consumer', 'consumo/retail': 'sector-consumer',
+  };
+  const trendIco = { alcista: '▲', bajista: '▼', lateral: '—' };
+
+  let html = '<div style="display:grid;gap:14px;">';
+  sectors.forEach(s => {
+    const sc = sectorClass[s.nombre?.toLowerCase()] || 'sector-tech';
+    html += `
+      <div style="padding:14px;background:var(--bg);border:1px solid var(--border);">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <span style="font-size:18px">${s.emoji || '📊'}</span>
+          <span class="sector-tag ${sc}">${s.nombre}</span>
+          <span style="font-size:11px;color:${s.tendencia==='alcista'?'var(--accent)':s.tendencia==='bajista'?'var(--danger)':'var(--accent3)'}">
+            ${trendIco[s.tendencia] || '—'} ${(s.tendencia || '').toUpperCase()}
+          </span>
+        </div>
+        <p style="font-size:12px;color:#b8b8cc;line-height:1.7;margin-bottom:8px;">${s.analisis || ''}</p>
+        ${s.destacados ? `<div style="display:flex;gap:6px;flex-wrap:wrap;">${s.destacados.map(t=>`<span style="font-size:10px;padding:2px 8px;background:rgba(255,255,255,0.05);border:1px solid var(--border);letter-spacing:1px;">${t}</span>`).join('')}</div>` : ''}
+      </div>`;
+  });
+  html += '</div>';
+  return html;
+}
+
+function renderOpps(opps) {
+  let html = '<div class="opp-list">';
+  opps.forEach((o, i) => {
+    html += `
+      <div class="opp-item">
+        <div class="opp-rank">${String(i+1).padStart(2,'0')}</div>
+        <div>
+          <div class="opp-ticker">${o.ticker} <span style="font-size:12px;font-family:var(--font-mono);color:var(--muted);font-weight:400;">— ${o.empresa || ''}</span></div>
+          <div class="opp-reason">${o.razon || ''}</div>
+        </div>
+      </div>`;
+  });
+  html += '</div>';
+  return html;
+}
+
+function renderRisks(risks) {
+  let html = '<div style="display:grid;gap:8px;">';
+  risks.forEach((r, i) => {
+    html += `<div style="display:flex;gap:12px;align-items:start;padding:10px;background:rgba(239,68,68,0.04);border:1px solid rgba(239,68,68,0.12);">
+      <span style="color:var(--danger);font-weight:700;font-size:12px;flex-shrink:0;">${String(i+1).padStart(2,'0')}</span>
+      <span style="font-size:12px;color:#b8b8cc;line-height:1.6;">${r}</span>
+    </div>`;
+  });
+  html += '</div>';
+  return html;
+}
+
+function renderFallback(text) {
+  const results = document.getElementById('results');
+  results.innerHTML = `
+    <div class="section-card">
+      <div class="card-title">📊 Análisis de mercado</div>
+      <div class="prose">${text.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</div>
+      <div class="disclaimer" style="margin-top:20px;">⚠ Este análisis es informativo. No constituye asesoramiento financiero profesional.</div>
+    </div>`;
+}
+
+function renderError(msg) {
+  document.getElementById('results').innerHTML = `
+    <div class="error-box">
+      <strong>Error al obtener análisis</strong><br>
+      ${msg}<br><br>
+      <small>Verificá tu conexión e intentá nuevamente.</small>
+    </div>`;
+}
+
+function showSkeleton() {
+  document.getElementById('results').innerHTML = `
+    <div style="display:grid;gap:16px;">
+      ${[1,2,3].map(()=>`
+        <div class="skeleton" style="height:${80+Math.random()*80}px;">
+          <div style="font-size:11px;color:var(--muted);letter-spacing:2px;margin-bottom:10px;">CARGANDO DATOS...</div>
+          <div style="height:8px;background:var(--border);width:60%;margin-bottom:8px;"></div>
+          <div style="height:8px;background:var(--border);width:40%;"></div>
+        </div>`).join('')}
+    </div>`;
+}
+
+// Enter key
+document.getElementById('queryInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') runAnalysis();
+});
+
+// Init time
+document.getElementById('mTime').textContent = new Date().toLocaleTimeString('es-AR', {hour:'2-digit',minute:'2-digit'});
+document.getElementById('mDate').textContent = new Date().toLocaleDateString('es-AR', {day:'2-digit',month:'short',year:'numeric'});
+</script>
+</body>
+</html>
