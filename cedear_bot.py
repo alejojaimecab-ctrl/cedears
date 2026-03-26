@@ -297,7 +297,8 @@ class AnalizadorCEDEARs:
         self.timestamp  = datetime.now()
 
         if errores:
-            print(f"\n{amarillo(f'  ⚠ Sin datos para: {', '.join(errores)}')}")
+            lista_errores = ', '.join(errores)
+            print(f"\n{amarillo(f'  ⚠ Sin datos para: {lista_errores}')}")
 
         return self.resultados
 
