@@ -27,8 +27,8 @@ sys.path.insert(0, os.path.dirname(__file__))
 from cedear_bot import IOLClient, AnalizadorCEDEARs, CEDEARS
 
 # ── Configuración ─────────────────────────────────────────────────────────────
-IOL_USER     = os.environ.get("IOL_USER",     "TU_EMAIL_IOL")
-IOL_PASSWORD = os.environ.get("IOL_PASSWORD", "TU_PASSWORD_IOL")
+IOL_USER     = os.environ.get("IOL_USER",     "alejojaimecab@gmail.com")
+IOL_PASSWORD = os.environ.get("IOL_PASSWORD", "Belgrano1969!")
 PORT         = int(os.environ.get("PORT", 5000))
 
 # ── Flask app ─────────────────────────────────────────────────────────────────
